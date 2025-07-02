@@ -38,6 +38,9 @@ public class ClientController {
         return clientService.updateClient(id, client);
     }
 
+
+
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteClient(@PathVariable Long id) {
         clientService.deleteClient(id);
