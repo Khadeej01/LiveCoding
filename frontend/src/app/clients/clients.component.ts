@@ -1,86 +1,64 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { ClientService } from '../service/client.service';
+import { FormsModule } from '@angular/forms';
+import { ClientsService, Client } from '../service/client.service';
 
 @Component({
   selector: 'app-clients',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatTableModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule
-  ],
-  templateUrl: './clients.component.html',
-  styleUrls: ['./clients.component.css']
+  imports: [CommonModule, FormsModule],
+  templateUrl: './clients.component.html'
 })
-export class ClientsComponent implements OnInit {
-  clients: any[] = [];
-  clientForm: FormGroup;
-  selectedClient: any = null;
-  displayedColumns: string[] = ['id', 'nom', 'email', 'telephone', 'actions'];
+export class ClientsComponent {
+  clients: Client[] = [];
+  currentClient: Client = {} as Client;
+  isEditing = false;
 
-  constructor(private clientService: ClientService, private fb: FormBuilder) {
-    this.clientForm = this.fb.group({
-      nom: [''],
-      email: [''],
-      telephone: ['']
-    });
-  }
+  constructor(private clientsService: ClientsService) { }
 
   ngOnInit(): void {
     this.loadClients();
   }
 
   loadClients(): void {
-    this.clientService.getClients().subscribe({
-      next: (data) => (this.clients = data),
-      error: (err) => console.error('Erreur:', err)
+    this.clientsService.getClients().subscribe((data: Client[]) => {
+      this.clients = data;
     });
+  }
+
+  startEdit(client: Client): void {
+    this.currentClient = { ...client };
+    this.isEditing = true;
+  }
+
+  cancelEdit(): void {
+    this.currentClient = {} as Client;
+    this.isEditing = false;
   }
 
   saveClient(): void {
-    if (this.selectedClient) {
-      this.clientService.updateClient(this.selectedClient.id, this.clientForm.value).subscribe({
-        next: () => {
+    if (this.isEditing) {
+      this.clientsService.updateClient(this.currentClient.id!, this.currentClient)
+        .subscribe(() => {
           this.loadClients();
-          this.resetForm();
-        },
-        error: (err) => console.error('Erreur:', err)
-      });
+          this.cancelEdit();
+        });
     } else {
-      this.clientService.createClient(this.clientForm.value).subscribe({
-        next: () => {
+      this.clientsService.createClient(this.currentClient)
+        .subscribe(() => {
           this.loadClients();
-          this.resetForm();
-        },
-        error: (err) => console.error('Erreur:', err)
-      });
+          this.currentClient = {} as Client;
+        });
     }
   }
 
-  editClient(client: any): void {
-    this.selectedClient = client;
-    this.clientForm.patchValue(client);
-  }
-
-  deleteClient(id: number): void {
-    this.clientService.deleteClient(id).subscribe({
-      next: () => this.loadClients(),
-      error: (err) => console.error('Erreur:', err)
-    });
-  }
-
-  resetForm(): void {
-    this.selectedClient = null;
-    this.clientForm.reset();
+  deleteClient(id: number | undefined): void {
+    if (id === undefined) return;
+    if (confirm('Are you sure you want to delete this client?')) {
+      this.clientsService.deleteClient(id)
+        .subscribe(() => {
+          this.loadClients();
+        });
+    }
   }
 }
