@@ -5,7 +5,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { ClientService } from '../../service/clients.service';
+import { ClientService } from '../service/client.service';
 
 @Component({
   selector: 'app-clients',
